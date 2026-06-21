@@ -246,9 +246,21 @@ export async function getQuote({ symbol } = {}) {
   const data = await evaluate(`
     (function() {
       var api = ${CHART_API};
-      var sym = ${safeString(symbol || '')};
-      if (!sym) { try { sym = api.symbol(); } catch(e) {} }
-      if (!sym) { try { sym = api.symbolExt().symbol; } catch(e) {} }
+      var active = '';
+      try { active = api.symbol(); } catch(e) {}
+      if (!active) { try { active = api.symbolExt().symbol; } catch(e) {} }
+      // quote_get reads the active chart's main series only. If a different
+      // symbol is requested, bail out rather than mislabel the active series.
+      var requested = ${safeString(symbol || '')};
+      if (requested) {
+        var reqU = String(requested).toUpperCase();
+        var actU = String(active).toUpperCase();
+        var match = reqU.indexOf(':') >= 0
+          ? (reqU === actU)
+          : (reqU === actU || reqU === actU.split(':').pop());
+        if (!match) return { __mismatch: true, requested: requested, active: active };
+      }
+      var sym = active;
       var ext = {};
       try { ext = api.symbolExt() || {}; } catch(e) {}
       var bars = ${BARS_PATH};
@@ -273,6 +285,12 @@ export async function getQuote({ symbol } = {}) {
       return quote;
     })()
   `);
+  if (data && data.__mismatch) {
+    throw new Error(
+      `quote_get only reads the active chart symbol (${data.active || 'unknown'}), ` +
+      `not "${data.requested}". Call chart_set_symbol("${data.requested}") first, then quote_get.`
+    );
+  }
   if (!data || (!data.last && !data.close)) throw new Error('Could not retrieve quote. The chart may still be loading.');
   return { success: true, ...data };
 }

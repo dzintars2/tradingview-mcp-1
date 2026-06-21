@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCREENSHOT_DIR = join(dirname(dirname(__dirname)), 'screenshots');
 
-export async function captureScreenshot({ region, filename, method } = {}) {
+export async function captureScreenshot({ region, filename, method, embed } = {}) {
   mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
@@ -63,8 +63,12 @@ export async function captureScreenshot({ region, filename, method } = {}) {
   const { data } = await client.Page.captureScreenshot(params);
   writeFileSync(filePath, Buffer.from(data, 'base64'));
 
-  return {
+  const out = {
     success: true, method: 'cdp', file_path: filePath, region,
     size_bytes: Buffer.from(data, 'base64').length,
   };
+  // When embed is requested, hand the raw base64 back so the tool layer can
+  // return it as an inline MCP image block (lets the client actually see it).
+  if (embed) out.image_base64 = data;
+  return out;
 }

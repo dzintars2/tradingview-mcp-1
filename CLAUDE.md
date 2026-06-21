@@ -71,14 +71,14 @@ Use `study_filter` parameter to target a specific indicator by name substring (e
 ### "Manage alerts"
 - `alert_create` → set price alert (condition: "crossing", "greater_than", "less_than")
 - `alert_list` → view active alerts
-- `alert_delete` → remove alerts
+- `alert_delete` → remove a specific alert (`alert_id` from `alert_list`) or, with `delete_all: true`, every alert. Prefer per-id; confirm before `delete_all`.
 
 ### "Navigate the UI"
 - `ui_open_panel` → open/close pine-editor, strategy-tester, watchlist, alerts, trading
 - `ui_click` → click buttons by aria-label, text, or data-name
 - `layout_switch` → load a saved layout by name
 - `ui_fullscreen` → toggle fullscreen
-- `capture_screenshot` → take a screenshot (regions: "full", "chart", "strategy_tester")
+- `capture_screenshot` → take a screenshot (regions: "full", "chart", "strategy_tester"). Default returns `file_path` only; pass `embed: true` to get the image inline so you can actually see it (~400KB context cost).
 
 ### "TradingView isn't running"
 - `tv_launch` → auto-detect and launch TradingView with CDP on Mac/Win/Linux
@@ -108,7 +108,7 @@ These tools can return large payloads. Follow these rules to avoid context bloat
 | `data_get_pine_boxes` | ~1-2 KB per study (deduplicated zones) |
 | `data_get_ohlcv` (summary) | ~500 bytes |
 | `data_get_ohlcv` (100 bars) | ~8 KB |
-| `capture_screenshot` | ~300 bytes (returns file path, not image data) |
+| `capture_screenshot` | ~300 bytes (file path only); ~400 KB with `embed: true` (inline image) |
 
 ## Tool Conventions
 
